@@ -205,7 +205,7 @@ public class ODAlgorithm {
                     // I/I OCs
                     (numberOfIIOC_cond - prevIIOCcond) + " " +
                     (numberOfIIOC_uncond - prevIIOCuncond));
-            // update the prev data to use in the next level
+            //  the prev data to use in the next level
             prevFD = numberOfFD;
             prevOD = numberOfOD;
             prevEIOC_cond = numberOfEIOC_cond;
@@ -240,7 +240,7 @@ public class ODAlgorithm {
             SpecialScoreList.sort(Collections.reverseOrder());
             for (SpecialScore specScore :
                     SpecialScoreList) {
-                messageToPrint = "Score = ";
+                messageToPrint = "Special Score = ";
                 messageToPrint += String.format("%.6f", specScore.score) + ", ";
                 messageToPrint += String.format("%.6f", specScore.simpleScore) + ", ";
                 messageToPrint += specScore.doesFdHold ? "E/I OD " : "E/I OC ";
@@ -254,7 +254,7 @@ public class ODAlgorithm {
             GeneralScoreList.sort(Collections.reverseOrder());
             for (GeneralScore genScore :
                     GeneralScoreList) {
-                messageToPrint = "Score = ";
+                messageToPrint = "General Score = ";
                 messageToPrint += String.format("(%.6f, %.6f), ", genScore.leftScore, genScore.rightScore);
                 messageToPrint += String.format("(%.6f, %.6f), ", genScore.leftSimpleScore, genScore.rightSimpleScore);
                 messageToPrint += genScore.isConditional ? "I/I OC cond" : "I/I OC unco";
@@ -985,6 +985,7 @@ public class ODAlgorithm {
                         isOC = 1;
                         long score = 0;
                         if (!XScoreMap.containsKey(X_minus_AB)) {
+                            System.out.println("strppedPartition_X_minus_AB: " + strippedPartition_X_minus_AB);
                             score = calculateInterestingnessScore(strippedPartition_X_minus_AB, X_minus_AB);
                             XScoreMap.put(X_minus_AB, score);
                         } else {
@@ -1073,7 +1074,7 @@ public class ODAlgorithm {
                                     
                                     didFindUnconditionalEI = true;
                                 }
-                                
+                                System.out.println("specOrders: " + specOrders);
                                 double[] specialScores = calculateSpecialInterestingness(specOrders, specSocMiner.isOrderConditional);
                                 SpecialScoreList.add(new SpecialScore(specialScores[0], specialScores[1], "(R->L)", isOD, specSocMiner.isOrderConditional, X_minus_AB, oneAB, orderStr));
                             }
@@ -1207,6 +1208,8 @@ public class ODAlgorithm {
     private long calculateInterestingnessScore(
             ObjectBigArrayBigList<LongBigArrayBigList> strippedPartition,
             OpenBitSet X) {
+
+        // System.out.println("calculateInterestingnessScore" + strippedPartition);
         long score = 0;
         
         if (X.isEmpty()) {
@@ -1238,6 +1241,7 @@ public class ODAlgorithm {
                 specOrders) {
             allUniques.addAll(singleOrder.keySet());
             countOfLocalPairs += auxGetNumberOfPairOrders(singleOrder);
+            // System.out.println("D HERE: " + singleOrder);
             countOfLocalLongestPath += auxLongestPathDAG(singleOrder);
         }
         
@@ -1267,7 +1271,7 @@ public class ODAlgorithm {
         long[] totalUniques = {0, 0};
         long[] existingPairs = {0, 0};
         long[] longestPaths = {0, 0};
-        
+        System.out.println("allChains " + allChains);
         List<Set<Long>> allUniques = new ArrayList<>(Arrays.asList(new HashSet<>(), new HashSet<>()));
         double[] avgOfPathScores = {0., 0.};
         
@@ -1280,7 +1284,6 @@ public class ODAlgorithm {
                 
                 allUniques.get(i).addAll(singleOrder.keySet());
                 existingPairs[i] += localPairs;
-                
                 long longestLocalPath = auxLongestPathDAG(singleOrder);
                 if (isConditional)
                     longestPaths[i] += longestLocalPath;
@@ -1346,7 +1349,7 @@ public class ODAlgorithm {
     // longest path in the order graph.
     private long auxLongestPathDAG(Map<Long, Set<Long>> singleOrder) {
         long startTime = System.nanoTime();
-        
+        System.out.println("singleOrder: " + singleOrder);
         Map<Long, Long> longestPath = new HashMap<>();
         for (Long source :
                 singleOrder.keySet()) {
@@ -1355,7 +1358,7 @@ public class ODAlgorithm {
             }
         }
         MainClass.pathBasedScoreTotalTime += (System.nanoTime() - startTime);
-        
+        System.out.println("LongestPath: " + longestPath);
         return longestPath.size() > 0 ? Collections.max(longestPath.values()) : 0;
     }
     

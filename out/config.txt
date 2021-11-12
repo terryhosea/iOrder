@@ -1,16 +1,17 @@
-<dataset_name>
+Flight.csv
 FastOD
-<num_of_rows>
-<num_of_attributes>
-<num_of_runs>
+10000
+2
+1
 ,
 PruneTrue
 InterestingnessPruneTrueF
-<interestingness_threshold>
-<top_k>
+100000000000
+100
 BidirectionalTrueF
 RankDoubleTrue
 ReverseRankingTrueF
 BidirectionalPruneTrueF
-<reverse_ranking_percentage>
+9999
 OnlyConditionalIIOCFalse
+1 1
