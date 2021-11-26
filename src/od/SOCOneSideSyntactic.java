@@ -84,11 +84,15 @@ public class SOCOneSideSyntactic {
     private List<Map<Long, Set<Long>>> executeWithFD() {
         for (ObjectBigArrayBigList<LongBigArrayBigList> sorted_TAU_LHS : TAU_XA) {// iterate over each eq. class in X
             ArrayList<Long> listRHS = getListRHSwithFD(sorted_TAU_LHS);
+            // System.out.println("sorted_TAU_LHS" + sorted_TAU_LHS);
+            // System.out.println("listRHS" + listRHS);
             if (listRHS == null) { // at least one of the chains is individually invalid, this is not even conditional
                 return null;
             }
+            // System.out.println("deriveChainWithFD(listRHS)" + deriveChainWithFD(listRHS));
             addChain(deriveChainWithFD(listRHS));
         }
+        // System.out.println("allChains: " + allChains);
         Map<Long, Set<Long>> adjList = mergeChains(allChains);
         boolean isValid = validateCandidate(adjList);
         if (isValid) {  // it's unconditional

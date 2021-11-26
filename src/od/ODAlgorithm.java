@@ -17,6 +17,7 @@ import org.apache.lucene.util.OpenBitSet;
 
 import java.io.*;
 import java.util.*;
+import java.sql.Timestamp;
 
 
 public class ODAlgorithm {
@@ -80,6 +81,7 @@ public class ODAlgorithm {
         
         // Get information about table from database or csv file
         ObjectArrayList<Object2ObjectOpenHashMap<Object, LongBigArrayBigList>> partitions = loadData();
+        // System.out.println("partitions: " + partitions);
         setColumnIdentifiers();
         numberAttributes = this.columnNames.size();
         
@@ -141,7 +143,7 @@ public class ODAlgorithm {
         
         // At this point you can create a mapping between tupleIDs and the equivalence class that they belong to (first tID in the equivalence class can stand as its representative)
         // we need as many entries as there are attributes in the data:
-        
+        // System.out.println("TAU_SortedList: " + TAU_SortedList);
         
         //SOC ADD REMOVE
         for (ObjectBigArrayBigList attrTau : TAU_SortedList) {
@@ -710,7 +712,7 @@ public class ODAlgorithm {
                         for (long l_a : tau_A_element) {
                             //insert in PI_X_TAU_A
                             if (strippedPartition_X_minus_AB_Hash.containsKey(l_a)) {
-                                
+                                // System.out.println("l_a :"+l_a );
                                 int index_in_PI_X_TAU_A = strippedPartition_X_minus_AB_Hash.get(l_a);
                                 //what is this trying to handle?
                                 if (seenIndexSet.contains(index_in_PI_X_TAU_A)) {
@@ -985,7 +987,7 @@ public class ODAlgorithm {
                         isOC = 1;
                         long score = 0;
                         if (!XScoreMap.containsKey(X_minus_AB)) {
-                            System.out.println("strppedPartition_X_minus_AB: " + strippedPartition_X_minus_AB);
+                            // System.out.println("strppedPartition_X_minus_AB: " + strippedPartition_X_minus_AB);
                             score = calculateInterestingnessScore(strippedPartition_X_minus_AB, X_minus_AB);
                             XScoreMap.put(X_minus_AB, score);
                         } else {
@@ -1045,13 +1047,16 @@ public class ODAlgorithm {
                             printOpenBitSetNames("Inspecting E/I " + ocOrOd + " (R->L): ", X_minus_AB, oneAB);
                             
                             startTime = System.nanoTime();
+                            //Debugging here
                             specSocMiner = new SOCOneSideSyntactic(TAU_reverseMap, A_index, B_index, isOD, PI_X_TAU_B_1, PI_X_TAU_A_1);
                             specOrders = specSocMiner.execute();
                             duration = System.nanoTime() - startTime;
                             
                             String orderStr = "";
                             if (specOrders != null) {
-                                orderStr = orderToString(specOrders, A_index);
+                                orderStr = orderToString(specOrders, A_index, datasetName);
+                                // System.out.println("AM TIRED: " + orderToMap(specOrders, A_index));
+                                // System.out.println("orderStr: " + orderStr);
                             }
     
                             writeValidationTimeToCSV(datasetName, L, X_minus_AB, A, B, duration, "EI" + ocOrOd,
@@ -1074,7 +1079,7 @@ public class ODAlgorithm {
                                     
                                     didFindUnconditionalEI = true;
                                 }
-                                System.out.println("specOrders: " + specOrders);
+                                // System.out.println("2!! :" + (A_index - 1));
                                 double[] specialScores = calculateSpecialInterestingness(specOrders, specSocMiner.isOrderConditional);
                                 SpecialScoreList.add(new SpecialScore(specialScores[0], specialScores[1], "(R->L)", isOD, specSocMiner.isOrderConditional, X_minus_AB, oneAB, orderStr));
                             }
@@ -1098,7 +1103,9 @@ public class ODAlgorithm {
                             
                             String orderStr = "";
                             if (specOrders != null) {
-                                orderStr = orderToString(specOrders, B_index);
+                                orderStr = orderToString(specOrders, B_index, datasetName);
+                                // System.out.println("AM TIRED: " + orderToMap(specOrders, B_index));
+                                // System.out.println("orderStr: " + orderStr);
                             }
                             
                             writeValidationTimeToCSV(datasetName, L, X_minus_AB, B, A, duration, "EI" + ocOrOd,
@@ -1121,7 +1128,7 @@ public class ODAlgorithm {
                                     
                                     didFindUnconditionalEI = true;
                                 }
-                                
+                                // System.out.println("1!! : " + MainClass.isColumnActive);
                                 double[] specialScores = calculateSpecialInterestingness(specOrders, specSocMiner.isOrderConditional);
                                 SpecialScoreList.add(new SpecialScore(specialScores[0], specialScores[1], "(L->R)", isOD, specSocMiner.isOrderConditional, X_minus_AB, oneAB, orderStr));
                             }
@@ -1150,11 +1157,12 @@ public class ODAlgorithm {
                                 for (List<Map<Long, Set<Long>>> pgOrders: genOrder) {
                                     tmp = new ArrayList<>();
                                     tmp.add(pgOrders.get(0));
-                                    o1.append(orderToString(tmp, A_index));
-                                    
+                                    o1.append(orderToString(tmp, A_index, datasetName));
+                                    // System.out.println("AM TIRED: " + orderToMap(tmp, A_index));
                                     tmp = new ArrayList<>();
                                     tmp.add(pgOrders.get(1));
-                                    o2.append(orderToString(tmp, B_index));
+                                    o2.append(orderToString(tmp, B_index, datasetName));
+                                    // System.out.println("AM TIRED: " + orderToMap(tmp, B_index));
                                 }
                                 orderStr = o1 + "" + o2;
                             }
@@ -1230,7 +1238,9 @@ public class ODAlgorithm {
     }
     
     // defined multiple measures (original, simplified), will compute both of them for storage and comparison
+    // Calculate interestingness for E/I case
     public double[] calculateSpecialInterestingness(List<Map<Long, Set<Long>>> specOrders, boolean isConditional) {
+        // System.out.println("specOrders " + specOrders);
         long numUnique;
         long max_pairs;
         
@@ -1244,7 +1254,7 @@ public class ODAlgorithm {
             // System.out.println("D HERE: " + singleOrder);
             countOfLocalLongestPath += auxLongestPathDAG(singleOrder);
         }
-        
+        // System.out.println("calculateSpecialInterestingness: " + countOfLocalLongestPath);
         numUnique = allUniques.size();
         max_pairs = numUnique * (numUnique - 1) / 2;
         
@@ -1267,11 +1277,12 @@ public class ODAlgorithm {
     // gets list of pairs of all chains in the final order
     // first dimension original/simple measure, second dimension left/right chains
     // depending of conditional or not, aggregate individual chains
+    // Calculate interestingness for I/I case
     public double[][] calculateGeneralInterestingness(ArrayList<List<Map<Long, Set<Long>>>> allChains, boolean isConditional) {
         long[] totalUniques = {0, 0};
         long[] existingPairs = {0, 0};
         long[] longestPaths = {0, 0};
-        System.out.println("allChains " + allChains);
+        // System.out.println("allChains " + allChains);
         List<Set<Long>> allUniques = new ArrayList<>(Arrays.asList(new HashSet<>(), new HashSet<>()));
         double[] avgOfPathScores = {0., 0.};
         
@@ -1285,6 +1296,7 @@ public class ODAlgorithm {
                 allUniques.get(i).addAll(singleOrder.keySet());
                 existingPairs[i] += localPairs;
                 long longestLocalPath = auxLongestPathDAG(singleOrder);
+                // System.out.println("longestLocalPath: " + longestLocalPath);
                 if (isConditional)
                     longestPaths[i] += longestLocalPath;
                 else if (longestLocalPath > longestPaths[i])
@@ -1349,7 +1361,7 @@ public class ODAlgorithm {
     // longest path in the order graph.
     private long auxLongestPathDAG(Map<Long, Set<Long>> singleOrder) {
         long startTime = System.nanoTime();
-        System.out.println("singleOrder: " + singleOrder);
+        // System.out.println("singleOrder: " + singleOrder);
         Map<Long, Long> longestPath = new HashMap<>();
         for (Long source :
                 singleOrder.keySet()) {
@@ -1358,7 +1370,7 @@ public class ODAlgorithm {
             }
         }
         MainClass.pathBasedScoreTotalTime += (System.nanoTime() - startTime);
-        System.out.println("LongestPath: " + longestPath);
+        // System.out.println("LongestPath: " + longestPath);
         return longestPath.size() > 0 ? Collections.max(longestPath.values()) : 0;
     }
     
@@ -1699,6 +1711,7 @@ public class ODAlgorithm {
         for (String column_name : this.columnNames) {
             columnIdentifiers.add(new ColumnIdentifier(this.tableName, column_name));
         }
+        System.out.println("columnIdentifiers: " + columnIdentifiers);
     }
     
     private void fillData() {
@@ -1768,6 +1781,8 @@ public class ODAlgorithm {
         this.tableName = "";//input.relationName();
         
         this.columnNames = columnNamesList;// input.columnNames();
+        // System.out.println("columnNames" + columnNames);
+        // System.out.println("columnNamesList" + columnNamesList);
         
         ObjectArrayList<Object2ObjectOpenHashMap<Object, LongBigArrayBigList>> partitions =
                 new ObjectArrayList<Object2ObjectOpenHashMap<Object, LongBigArrayBigList>>(this.numberAttributes);
@@ -1797,11 +1812,12 @@ public class ODAlgorithm {
                     partition.put(entry, newEqClass);
                     
                     id2Val.get(i).put(tupleId, entry);
+                    // System.out.println("tupleId, entry " + tupleId + ", " + entry);
                 }
             }
             tupleId++;
         }
-        
+        // System.out.println(id2Val);
         this.numberTuples = tupleId;
         return partitions;
         
@@ -1916,6 +1932,8 @@ public class ODAlgorithm {
     
     private void writeValidationTimeToCSV(String datasetName, int level, OpenBitSet X_min_AB, OpenBitSet A, OpenBitSet B,
                                           long duration, String depType, long polGroups, long numEqCs, boolean holds, String order) {
+
+
         
         String toWrite = new String();
         if (A != null) {
@@ -1935,7 +1953,7 @@ public class ODAlgorithm {
         }
         
         try {
-            String filename = "stats/" + datasetName + "-ValidationTimeStats-" + numberTuples + "-" + numberAttributes + ".csv";
+            String filename = "../stats/" + datasetName + "-ValidationTimeStats-" + numberTuples + "-" + numberAttributes + ".csv";
             FileWriter fw;
             
             if (firstTimeWritingValidationInfo) {
@@ -1946,6 +1964,25 @@ public class ODAlgorithm {
             }
             
             fw.write(toWrite);//appends the string to the file
+            fw.close();
+        } catch (IOException ioe) {
+            System.err.println("IOException: " + ioe.getMessage());
+        }
+
+        // System.out.println("Order: " + order + "\n\n");
+        StringBuilder res = new StringBuilder();
+        if (A != null && order.length() > 0) {
+            String formattedOrder = "\"" + order.substring(0, order.length()-1) + "\"";
+            String result = datasetName + "," + getColumnSetName(A) + "," + getColumnSetName(B) + "," + depType + "," + formattedOrder + ",\n";
+            // System.out.println("result: " + result);
+            res.append(result);
+        } 
+        try {
+            // String timeStamp = new TimeStamp(new Date().getTime());
+            String filename = "../stats/orderGraph.csv";
+            FileWriter fw;
+            fw = new FileWriter(filename, true); //the true will append the new data
+            fw.write(res.toString());//appends the string to the file
             fw.close();
         } catch (IOException ioe) {
             System.err.println("IOException: " + ioe.getMessage());
@@ -1962,7 +1999,7 @@ public class ODAlgorithm {
         toWrite += numEqCs + ",";
         
         try {
-            String filename = "stats/" + datasetName + "-GeneralCaseStats-" + MainClass.ODAlgorithm.numberTuples + "-" + MainClass.ODAlgorithm.numberAttributes + ".csv";
+            String filename = "../stats/" + datasetName + "-GeneralCaseStats-" + MainClass.ODAlgorithm.numberTuples + "-" + MainClass.ODAlgorithm.numberAttributes + ".csv";
             FileWriter fw;
             if (firstTimeWritingGeneralInfo) {
                 fw = new FileWriter(filename, false); // will first clear the file
@@ -1993,7 +2030,7 @@ public class ODAlgorithm {
         toWrite += '\n';
         
         try {
-            String filename = "stats/" + datasetName + "-GeneralCaseStats-" + MainClass.ODAlgorithm.numberTuples + "-" + MainClass.ODAlgorithm.numberAttributes + ".csv";
+            String filename = "../stats/" + datasetName + "-GeneralCaseStats-" + MainClass.ODAlgorithm.numberTuples + "-" + MainClass.ODAlgorithm.numberAttributes + ".csv";
             FileWriter fw = new FileWriter(filename, true); //the true will append the new data
             fw.write(toWrite);//appends the string to the file
             fw.close();
@@ -2002,19 +2039,71 @@ public class ODAlgorithm {
         }
     }
     
-    public String orderToString(List<Map<Long, Set<Long>>> order, int colIndex) {
+    public String orderToString(List<Map<Long, Set<Long>>> order, int colIndex, String datasetName) {
         StringBuilder res = new StringBuilder();
         Map<Long, String> curId2Val = id2Val.get(colIndex - 1);
         for (Map<Long, Set<Long>> lst: order) {
             res.append("{");
             for (Long k: lst.keySet()) {
                 for (Long v: lst.get(k)) {
-                    res.append(curId2Val.get(k) + "<" + curId2Val.get(v) + "; ");
+                    res.append(curId2Val.get(k).replace(";", "|").replace("\"", "") + "<" + curId2Val.get(v).replace(";", "|").replace("\"", "") + "; ");
                 }
             }
             res.append("}; ");
         }
+
+        // System.out.println("orderToMap: " + orderToMap(order, colIndex, datasetName).toString());
+        // mapToCSV(orderToMap(order, colIndex, datasetName));
         return res.toString();
+    }
+
+    public Map<String, List<String>> orderToMap(List<Map<Long, Set<Long>>> order, int colIndex, String datasetName) {
+        Map<Long, String> curId2Val = id2Val.get(colIndex - 1);
+        Map<String, List<String>> res = new HashMap<>();
+        
+        List<String> dataset = new ArrayList<>();
+        dataset.add(datasetName);
+        res.put("datasetName", dataset);
+
+        for (Map<Long, Set<Long>> lst: order) {
+            // res.append("{");
+            for (Long k: lst.keySet()) {
+                for (Long v: lst.get(k)) {
+                    res.computeIfAbsent(curId2Val.get(k), x -> new ArrayList<>());
+                    res.computeIfAbsent(curId2Val.get(v), x -> new ArrayList<>());
+                    List<String> newValue = res.get(curId2Val.get(k));//.add("Yes");
+                    newValue.add(curId2Val.get(v));
+                    res.put(curId2Val.get(k), newValue);
+                }
+            }
+            // res.append("}; ");
+        }
+
+        return res;
+    }
+
+    public void mapToCSV(Map<String, List<String>> orderMap){
+        StringBuilder res = new StringBuilder();
+        String mapString = orderMap.toString().replace("\"","");
+        System.out.println("TOSTRING: \"" + mapString + "\"");
+        res.append("\"" + orderMap.toString() + "\"");
+        try {
+            // String timeStamp = new TimeStamp(new Date().getTime());
+            String filename = "../stats/orderGraph.csv";
+            FileWriter fw;
+            
+            if (firstTimeWritingValidationInfo) {
+                fw = new FileWriter(filename, false); // will first clear the file
+                firstTimeWritingValidationInfo = false;
+            } else {
+                fw = new FileWriter(filename, true); //the true will append the new data
+            }
+            res.append('\n');
+            fw.write(res.toString());//appends the string to the file
+            fw.close();
+        } catch (IOException ioe) {
+            System.err.println("IOException: " + ioe.getMessage());
+        }
     }
 }
 
