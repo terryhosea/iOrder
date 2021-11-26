@@ -34,3 +34,9 @@ java -cp .:../lib/* od.MainClass
 The output of the algorithm will be printed in the standard output stream and 
 aggregated results will be stored under the `stats/` folder.
 
+
+## Additional
+
+Make sure you are in ./out
+
+cd ../src/interestingness/ && javac -d ../../out -cp .:../../out/ Interestingness.java && cd ../od/ && javac -d ../../out -cp .:../../lib/\* _.java _/_.java _/_/_.java _/_/_/_.java && cd ../../out && java -cp .:../lib/\* interestingness.Interestingness
