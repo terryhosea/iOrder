@@ -177,6 +177,7 @@ import java.io.IOException;
 import od.MainClass;
 
 class Interestingness {
+    static String[] flags = new String[] { "log", "sqrt", "square"};
     // private static Map<String, List<String>> generateGraph(String[] nodes, String[][] links) {
 
     //     Map<String, List<String>> graph =  new HashMap<>();
@@ -388,7 +389,7 @@ class Interestingness {
         return rescaleFlag;
     }
 
-    public static List<Map<String, List<String>>> readMapFromCSV(String fileName) {
+    public static List<Map<String, List<String>>> mapFromCSV(String fileName) {
         // System.out.println("READMAPFROMCSV!!!!!!!!!");
         List<Map<String, List<String>>> res = new ArrayList<>();
         String fileDir = "../stats/" + fileName+ ".csv";
@@ -397,15 +398,37 @@ class Interestingness {
             BufferedReader br = new BufferedReader(new FileReader(fileDir));  
             String line; 
             while ((line = br.readLine()) != null){  
+                Map<String, List<String>> graph = new HashMap<>();
                 String[] row = line.split(",");    // use comma as separator  
                 // System.out.println(order[4]); 
-                String rawOrder = row[4].substring(2, row[4].length()-3);
+                String rawOrder = row[4].substring(2, row[4].length()-4);
+                // System.out.println(rawOrder);
                 String[] order = rawOrder.split(";");
+                // System.out.println(order);
                 // System.out.println("Order[4]: " +Arrays.toString(order)  + "\n\n\n");
-                for(String i: order) {
-                    System.out.println(i);
+                for(String o: order) {
+                    // System.out.println(o);
+                    String[] pair = o.split("<");
+                    // System.out.println("pair[0]:" + pair[0]);
+                    for(int i = 0; i<pair.length; i++){
+                        // System.out.println(pair[i]);
+                        graph.computeIfAbsent(pair[i].trim(), x -> new ArrayList<>());
+                        if(i>0) {
+                            String pair_0 = pair[0].trim();
+                            String pair_i = pair[i].trim();
+
+                            List<String> newValue = graph.get(pair_0);//.add("Yes");
+                            newValue.add(pair_i);
+                            graph.put(pair_0, newValue);
+                        }
+                        // graph.computeIfAbsent(pair[1], x -> new ArrayList<>());
+
+                    }
+                    // String[] pair = o.split("<");
                 }
-                System.out.println("\n\n");
+                // System.out.println(graph);
+                res.add(graph);
+                System.out.println("-------------\n\n");
             }  
         }   
         catch (IOException e) {  
@@ -415,9 +438,16 @@ class Interestingness {
         return res;
     }
 
+    public static void executeInterestingness(String fileName) {
+        List<Map<String, List<String>>> orderList = mapFromCSV("orderGraph");
+        avgConditionalInterestingness(orderList, generateRescaleFlag("log", flags));
+        System.out.println("\n\n\n");
+    }
+
     public static void main(String args[]) {
         MainClass.main(args);
-        readMapFromCSV("orderGraph");
+        executeInterestingness("orderGraph");
+        // mapFromCSV("orderGraph");
         /*
 
         //Generate testGraph1
